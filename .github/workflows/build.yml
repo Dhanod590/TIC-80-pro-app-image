@@ -2,9 +2,6 @@ name: Build Pro
 
 on: [push, workflow_dispatch]
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
 jobs:
   linux-pro:
     runs-on: ubuntu-24.04
@@ -22,10 +19,8 @@ jobs:
 
       - name: Build Pro Binary
         run: |
-          mkdir build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_PRO=On -DBUILD_STATIC=ON -DBUILD_WITH_ALL=ON ..
-          cmake --build . --parallel $(nproc)
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PRO=On -DBUILD_STATIC=ON -DBUILD_WITH_ALL=ON
+          cmake --build build --parallel $(nproc)
 
       - name: Upload Pro Artifact
         uses: actions/upload-artifact@v4
