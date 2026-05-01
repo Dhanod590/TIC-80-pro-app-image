@@ -1,63 +1,33 @@
-name: Build
+name: Build Pro
 
-on: 
-  push:
-  workflow_dispatch:
-
+on: [push, workflow_dispatch]
 
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
-  # === Windows ===
-  windows:
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
-      - name: Build
-        shell: cmd
-        run: |
-          cd build
-          cmake -G "Visual Studio 17 2022" -DBUILD_SDLGPU=On -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_WITH_ALL=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
-          cmake --build . --config MinSizeRel --parallel
-      - name: Deploy
-        uses: actions/upload-artifact@v4
-        with:
-          name: "tic80-windows"
-          path: |
-            build/bin/tic80.exe
-            build/bin/*.dll
-
-  # === Ubuntu gcc14 (Matches Debian Trixie) ===
-  linux-gcc14-glibc239:
+  linux-pro:
     runs-on: ubuntu-24.04
+
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
-      - name: Install
+
+      - name: Install Dependencies
         run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
-          sudo apt update
-          sudo apt-get install gcc-14 g++-14 libxext-dev libglu1-mesa-dev libasound2-dev libpulse-dev libaudio-dev libsamplerate0-dev libcurl4-openssl-dev -y
-          sudo ln -s -f /usr/bin/gcc-14 /usr/bin/gcc
-          sudo ln -s -f /usr/bin/g++-14 /usr/bin/g++
-      - name: Build Pro
+          sudo apt-get update
+          sudo apt-get install libxext-dev libglu1-mesa-dev libasound2-dev libpulse-dev libaudio-dev libsamplerate0-dev libcurl4-openssl-dev -y
+
+      - name: Build Pro Binary
         run: |
+          mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SDLGPU=On -DBUILD_PRO=On -DBUILD_STATIC=ON -DBUILD_WITH_ALL=ON ..
-          cmake --build . --parallel
-      - name: Deploy Pro
+          cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_PRO=On -DBUILD_STATIC=ON -DBUILD_WITH_ALL=ON ..
+          cmake --build . --parallel $(nproc)
+
+      - name: Upload Pro Artifact
         uses: actions/upload-artifact@v4
         with:
           name: "tic80-linux-pro"
